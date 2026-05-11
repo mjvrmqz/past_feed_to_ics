@@ -7,7 +7,7 @@ from ics import Calendar, Event
 # === CONFIG ===
 NOTION_TOKEN = os.environ.get("NOTION_TOKEN", "")
 PERSONAL_DATABASE_ID = "2aa20c51aebe80439c52e60fdf45dd31"
-WORK_DATABASE_ID = ""  # <-- paste your Work database ID here
+WORK_DATABASE_ID = "29520c51aebe80798d10db123c986db0"  # <-- paste your Work database ID here
 PAST_DATABASE_ID = "35d20c51aebe819486f5cc5757ad9281"
 
 # === FUNCTIONS ===
