@@ -134,6 +134,15 @@ def create_page(payload):
         raise RuntimeError(f"Failed to create page: {resp.status_code} {resp.text}")
     return resp.json()
 
+def delete_page(page_id):
+    resp = requests.patch(
+        f"https://api.notion.com/v1/pages/{page_id}",
+        headers=HEADERS,
+        json={"archived": True}
+    )
+    if resp.status_code != 200:
+        raise RuntimeError(f"Failed to delete page {page_id}: {resp.status_code} {resp.text}")
+
 def create_ics(pages, output_file="past_feed.ics"):
     cal = Calendar()
     for page in pages:
@@ -176,22 +185,28 @@ def main():
     all_pages = personal_pages + work_pages
     skipped = 0
     created = 0
+    deleted = 0
 
     for page in all_pages:
         props = extract_props(page)
         if not props["title"]:
             skipped += 1
             continue
-        if props["title"] in existing_titles:
+        if props["title"] not in existing_titles:
+            payload = build_page_payload(props)
+            create_page(payload)
+            existing_titles.add(props["title"])
+            created += 1
+            print(f"  + {props['title']}")
+        else:
             skipped += 1
-            continue
-        payload = build_page_payload(props)
-        create_page(payload)
-        existing_titles.add(props["title"])
-        created += 1
-        print(f"  + {props['title']}")
 
-    print(f"\nDone. Created: {created}, Skipped: {skipped}")
+        # Delete from source database regardless (transferred or duplicate)
+        delete_page(page["id"])
+        deleted += 1
+        print(f"  - Deleted from source: {props['title']}")
+
+    print(f"\nDone. Created: {created}, Skipped: {skipped}, Deleted from source: {deleted}")
 
     print("\nGenerating ICS feed from Past Feed...")
     past_feed_pages = query_database(PAST_FEED_DB)
